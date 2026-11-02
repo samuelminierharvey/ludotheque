@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Notre Ludothèque</title>
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; max-width: 780px; margin: 0 auto; padding-bottom: 60px; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .title-wrap h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
+    .sync-status { font-size: 0.75rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); display: inline-block; }
+    .dot.live { background: var(--success); }
+    .btn-sync { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .btn-sync:hover { border-color: var(--accent); color: var(--accent); }
+
+    .actions-bar { display: flex; gap: 8px; width: 100%; margin-bottom: 14px; }
+    .search-input { flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; font-size: 0.95rem; outline: none; }
+    .search-input:focus { border-color: var(--accent); }
+    .btn-random { background: var(--accent); color: #0f172a; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+
+    .filters { background: var(--card); padding: 14px; border-radius: 14px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    @media (min-width: 600px) { .filters { grid-template-columns: repeat(5, 1fr); } }
+    .filter-group label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+    select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px; border-radius: 8px; font-size: 0.85rem; outline: none; }
+
+    .results-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; padding: 0 4px; }
+    .btn-reset { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
+
+    .game-list { display: flex; flex-direction: column; gap: 12px; }
+    .game-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
+    .game-card:hover { border-color: #475569; }
+    .game-card.highlighted { border: 2px solid var(--accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.18); }
+
+    .game-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .game-main-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .game-thumb-wrap { width: 56px; height: 56px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-size: 1.5rem; }
+    .game-thumb { width: 100%; height: 100%; object-fit: cover; }
+    .game-title { font-size: 1.15rem; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .game-type { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .time-pill { background: rgba(56, 189, 248, 0.12); color: var(--accent); padding: 5px 10px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .badge { background: var(--bg); border: 1px solid var(--border); padding: 4px 9px; border-radius: 7px; font-size: 0.75rem; color: #cbd5e1; }
+    .badge.fatigue-Apero { border-color: #34d399; color: #6ee7b7; }
+    .badge.fatigue-Leger { border-color: #38bdf8; color: #7dd3fc; }
+    .badge.fatigue-Strategique { border-color: #fbbf24; color: #fde68a; }
+    .badge.fatigue-Brule { border-color: #f87171; color: #fca5a5; }
+
+    .expand-hint { font-size: 0.78rem; color: var(--muted); margin-top: 12px; display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px dashed var(--border); }
+
+    .setup-panel { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 0.92rem; line-height: 1.55; cursor: default; }
+    .setup-panel.open { display: block; }
+    .setup-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .setup-box strong { color: var(--accent); display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+
+    .scores-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .btn-edit-scores { background: var(--card); color: var(--accent); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .score-chip { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+    .score-val { font-weight: 700; color: var(--warning); }
+    .score-editor { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+    .score-editor.open { display: block; }
+    .score-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .score-row input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 7px 10px; border-radius: 6px; font-size: 0.85rem; width: 100%; }
+    .score-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; }
+    .btn-small { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 7px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    .btn-save { background: var(--success); color: #0f172a; border: none; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+
+    .links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .links a { text-align: center; background: var(--bg); color: var(--text); text-decoration: none; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; }
+    .links a:hover { border-color: var(--accent); color: var(--accent); }
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); background: var(--card); border-radius: 14px; border: 1px dashed var(--border); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-wrap">
+      <h1>🎲 Notre Ludothèque</h1>
+      <div class="sync-status">
+        <span id="sync-dot" class="dot"></span>
+        <span id="sync-text">Connexion au Google Sheet...</span>
+      </div>
+    </div>
+    <button class="btn-sync" onclick="loadFromGoogleSheet()">🔄 Actualiser</button>
+  </header>
+
+  <div class="actions-bar">
+    <input type="text" id="f-search" class="search-input" placeholder="Rechercher un jeu ou un style..." oninput="renderGames()">
+    <button class="btn-random" onclick="pickRandom()">🎲 Tirer au sort</button>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>👥 Joueurs</label>
+      <select id="f-players" onchange="renderGames()">
+        <option value="all">Tous</option>
+        <option value="2">2 joueurs</option>
+        <option value="3">3 joueurs</option>
+        <option value="4">4 joueurs</option>
+        <option value="5">5+ joueurs</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🎂 Âge min</label>
+      <select id="f-age" onchange="renderGames()">
+        <option value="all">Tous les âges</option>
+        <option value="4">Dès 4 ans (Enfant)</option>
+        <option value="6">6 ans et moins</option>
+        <option value="8">8 ans et +</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🔋 Fatigue</label>
+      <select id="f-fatigue" onchange="renderGames()">
+        <option value="all">Tous niveaux</option>
+        <option value="Apéro">Apéro (Zéro effort)</option>
+        <option value="Léger">Léger</option>
+        <option value="Stratégique">Stratégique</option>
+        <option value="Brûle-neurones">Brûle-neurones</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>⏱️ Durée max</label>
+      <select id="f-time" onchange="renderGames()">
+        <option value="all">Peu importe</option>
+        <option value="15">≤ 15 min</option>
+        <option value="30">≤ 30 min</option>
+        <option value="45">≤ 45 min</option>
+        <option value="60">≤ 60 min</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🤝 Interaction</label>
+      <select id="f-interaction" onchange="renderGames()">
+        <option value="all">Toutes</option>
+        <option value="Coop">Coopératif</option>
+        <option value="Compétitif relax">Compétitif relax</option>
+        <option value="Confrontation">Confrontation</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="results-info">
+    <span id="count-label">0 jeu affiché</span>
+    <button class="btn-reset" onclick="resetFilters()">Réinitialiser les filtres</button>
+  </div>
+
+  <div id="game-list" class="game-list"></div>
+
+  <script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDTCTLj-hkq0Mi924uG-PkmFnpBcHkdGqEFUsZHeoamH_JqV-g7h5efCZc21bA4fl-jHTvQLCA3iaN/pub?gid=0&single=true&output=csv";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyO3t70lKLZ_uAkvYJcuvEMT11qk-QhoCvJfN3Prt5RGeT5vbRXiYtDNbp2bbq4JSeb1Q/exec";
+
+    let games = [];
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], cell = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i], next = text[i + 1];
+        if (inQuotes) {
+          if (c === '"' && next === '"') { cell += '"'; i++; }
+          else if (c === '"') { inQuotes = false; }
+          else { cell += c; }
+        } else {
+          if (c === '"') { inQuotes = true; }
+          else if (c === ',') { row.push(cell.trim()); cell = ''; }
+          else if (c === '\n' || (c === '\r' && next === '\n')) {
+            if (c === '\r') i++;
+            row.push(cell.trim());
+            if (row.some(val => val !== '')) rows.push(row);
+            row = []; cell = '';
+          } else { cell += c; }
+        }
+      }
+      if (cell || row.length > 0) {
+        row.push(cell.trim());
+        if (row.some(val => val !== '')) rows.push(row);
+      }
+      if (rows.length < 2) return [];
+      const headers = rows[0];
+      return rows.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = r[idx] || ""; });
+        obj.Joueurs_Min = Number(obj.Joueurs_Min) || 1;
+        obj.Joueurs_Max = Number(obj.Joueurs_Max) || 4;
+        obj.Duree_Min = Number(obj.Duree_Min) || 30;
+        obj.Temps_Setup = Number(obj.Temps_Setup) || 2;
+        const localScore = localStorage.getItem('scores_' + obj.Nom);
+        if (!obj.Meilleurs_Scores && localScore) obj.Meilleurs_Scores = localScore;
+        return obj;
+      }).filter(g => g.Nom);
+    }
+
+    async function loadFromGoogleSheet() {
+      const dot = document.getElementById('sync-dot');
+      const txt = document.getElementById('sync-text');
+      txt.textContent = "Synchronisation en cours...";
+      try {
+        const res = await fetch(SHEET_CSV_URL, { cache: "no-cache" });
+        const csvText = await res.text();
+        const parsed = parseCSV(csvText);
+        if (parsed.length > 0) {
+          games = parsed;
+          dot.classList.add('live');
+          txt.textContent = `Synchronisé en direct (${games.length} jeux)`;
+        }
+      } catch (e) {
+        dot.classList.remove('live');
+        txt.textContent = `Mode hors-ligne (${games.length} jeux)`;
+      }
+      renderGames();
+    }
+
+    function parseScoresList(scoreStr) {
+      if (!scoreStr || !scoreStr.trim()) return [];
+      return scoreStr.split('|').map(item => {
+        const parts = item.split(':');
+        return {
+          name: (parts[0] || '').trim(),
+          score: (parts.slice(1).join(':') || '').trim()
+        };
+      }).filter(s => s.name);
+    }
+
+    function formatScoresHTML(scoreStr) {
+      const list = parseScoresList(scoreStr);
+      if (list.length === 0) {
+        return `<span style="color:var(--muted);font-size:0.82rem;">Aucun record enregistré pour l'instant.</span>`;
+      }
+      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
+      return `<div class="scores-grid">` + list.map((s, idx) => `
+        <div class="score-chip">
+          <span>${medals[idx] || '👤'} ${s.name}</span>
+          <span class="score-val">${s.score}</span>
+        </div>
+      `).join('') + `</div>`;
+    }
+
+    function toggleScoreEditor(gameIndex) {
+      const editor = document.getElementById(`score-editor-${gameIndex}`);
+      editor.classList.toggle('open');
+    }
+
+    function addScoreRow(gameIndex) {
+      const container = document.getElementById(`score-rows-${gameIndex}`);
+      const row = document.createElement('div');
+      row.className = 'score-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Nom du joueur" class="s-name">
+        <input type="text" placeholder="Score (ex: 85 pts)" class="s-val">
+      `;
+      container.appendChild(row);
+    }
+
+    async function saveScores(gameIndex) {
+      const game = getFilteredGames()[gameIndex];
+      const container = document.getElementById(`score-rows-${gameIndex}`);
+      const rows = container.querySelectorAll('.score-row');
+      const entries = [];
+      rows.forEach(r => {
+        const n = r.querySelector('.s-name').value.trim();
+        const v = r.querySelector('.s-val').value.trim();
+        if (n && v) entries.push(`${n} : ${v}`);
+      });
+      const formatted = entries.join(' | ');
+      game.Meilleurs_Scores = formatted;
+      localStorage.setItem('scores_' + game.Nom, formatted);
+
+      const btn = document.getElementById(`btn-save-${gameIndex}`);
+      btn.textContent = "⏳ Sauvegarde...";
+
+      try {
+        const url = `${APPS_SCRIPT_URL}?action=score&nom=${encodeURIComponent(game.Nom)}&scores=${encodeURIComponent(formatted)}`;
+        await fetch(url, { mode: 'no-cors' });
+      } catch (e) {}
+
+      renderGames(gameIndex);
+    }
+
+    function getFatigueClass(f) {
+      if (!f) return '';
+      if (f.includes('Apéro') || f.includes('Apero')) return 'fatigue-Apero';
+      if (f.includes('Léger') || f.includes('Leger')) return 'fatigue-Leger';
+      if (f.includes('Stratégique') || f.includes('Strategique')) return 'fatigue-Strategique';
+      return 'fatigue-Brule';
+    }
+
+    function extractAgeNumber(ageStr) {
+      if (!ageStr) return 0;
+      const m = String(ageStr).match(/\d+/);
+      return m ? Number(m[0]) : 0;
+    }
+
+    function getFilteredGames() {
+      const q = document.getElementById('f-search').value.toLowerCase().trim();
+      const p = document.getElementById('f-players').value;
+      const age = document.getElementById('f-age').value;
+      const f = document.getElementById('f-fatigue').value;
+      const t = document.getElementById('f-time').value;
+      const inter = document.getElementById('f-interaction').value;
+
+      return games.filter(g => {
+        const matchQ = !q || g.Nom.toLowerCase().includes(q) || (g.Type && g.Type.toLowerCase().includes(q));
+        const matchP = p === 'all' || (p === '5' ? g.Joueurs_Max >= 5 : (Number(p) >= g.Joueurs_Min && Number(p) <= g.Joueurs_Max));
+        const gameAge = extractAgeNumber(g.Age_Min);
+        const matchAge = age === 'all' || (age === '4' && gameAge <= 4) || (age === '6' && gameAge <= 6) || (age === '8' && gameAge >= 8);
+        const matchF = f === 'all' || g.Fatigue === f;
+        const matchT = t === 'all' || g.Duree_Min <= Number(t);
+        const matchI = inter === 'all' || (g.Interaction && g.Interaction.toLowerCase().includes(inter.toLowerCase()));
+        return matchQ && matchP && matchAge && matchF && matchT && matchI;
+      });
+    }
+
+    function renderGames(highlightIndex = null) {
+      const list = document.getElementById('game-list');
+      const countLabel = document.getElementById('count-label');
+      const filtered = getFilteredGames();
+      list.innerHTML = '';
+
+      countLabel.textContent = `${filtered.length} jeu${filtered.length > 1 ? 'x' : ''} disponible${filtered.length > 1 ? 's' : ''}`;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">Aucun jeu ne correspond à ces filtres.<br><small>Essaie d'élargir la durée, l'âge ou le niveau de fatigue.</small></div>`;
+        return;
+      }
+
+      filtered.forEach((g, idx) => {
+        const isHighlighted = highlightIndex === idx;
+        const card = document.createElement('div');
+        card.className = `game-card ${isHighlighted ? 'highlighted' : ''}`;
+        card.onclick = () => {
+          const panel = card.querySelector('.setup-panel');
+          panel.classList.toggle('open');
+        };
+
+        const jLabel = g.Joueurs_Min === g.Joueurs_Max ? `${g.Joueurs_Min} joueurs` : `${g.Joueurs_Min} à ${g.Joueurs_Max} joueurs`;
+        const ageLabel = g.Age_Min ? `🎂 ${g.Age_Min} ans` : '';
+        const existingScores = parseScoresList(g.Meilleurs_Scores);
+        const rowCount = Math.max(4, existingScores.length);
+        let editorRowsHTML = '';
+        for (let r = 0; r < rowCount; r++) {
+          const sName = existingScores[r] ? existingScores[r].name : '';
+          const sVal = existingScores[r] ? existingScores[r].score : '';
+          editorRowsHTML += `
+            <div class="score-row">
+              <input type="text" placeholder="Joueur ${r + 1}" class="s-name" value="${sName}">
+              <input type="text" placeholder="Score (ex: 90 pts)" class="s-val" value="${sVal}">
+            </div>
+          `;
+        }
+
+        const thumbHTML = g.Image_URL
+          ? `<img src="${g.Image_URL}" alt="${g.Nom}" class="game-thumb" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentElement.innerHTML='🎲'">`
+          : `🎲`;
+
+        card.innerHTML = `
+          <div class="game-header">
+            <div class="game-main-info">
+              <div class="game-thumb-wrap">${thumbHTML}</div>
+              <div style="min-width:0;">
+                <div class="game-title">${isHighlighted ? '🎯 ' : ''}${g.Nom}</div>
+                <div class="game-type">${g.Type || ''}</div>
+              </div>
+            </div>
+            <div class="time-pill">⏱️ ${g.Duree_Min} min</div>
+          </div>
+          <div class="badges">
+            <span class="badge">👥 ${jLabel} (Idéal : ${g.Joueurs_Ideal})</span>
+            ${ageLabel ? `<span class="badge">${ageLabel}</span>` : ''}
+            <span class="badge ${getFatigueClass(g.Fatigue)}">🔋 ${g.Fatigue}</span>
+            <span class="badge">🛠️ Setup : ${g.Temps_Setup} min</span>
+            <span class="badge">🤝 ${g.Interaction}</span>
+            <span class="badge">📐 Table : ${g.Encombrement}</span>
+          </div>
+          <div class="expand-hint">
+            <span>Toucher pour voir la mise en place, les règles et les scores</span>
+            <span>▼</span>
+          </div>
+          <div class="setup-panel ${isHighlighted ? 'open' : ''}" onclick="event.stopPropagation()">
+            <div class="setup-box">
+              <strong>1. Mise en place commune (${g.Temps_Setup} min)</strong>
+              ${g.Setup_Commun}
+            </div>
+            <div class="setup-box">
+              <strong>2. Distribution par joueur</strong>
+              ${g.Setup_Par_Joueur}
+            </div>
+            <div class="setup-box">
+              <strong>3. Premier tour</strong>
+              ${g.Premier_Tour}
+            </div>
+            <div class="setup-box">
+              <div class="scores-header">
+                <strong style="margin:0;">🏆 Meilleurs Scores</strong>
+                <button class="btn-edit-scores" onclick="toggleScoreEditor(${idx})">✏️ Modifier les scores</button>
+              </div>
+              ${formatScoresHTML(g.Meilleurs_Scores)}
+              <div id="score-editor-${idx}" class="score-editor">
+                <div id="score-rows-${idx}">${editorRowsHTML}</div>
+                <div class="score-actions">
+                  <button class="btn-small" onclick="addScoreRow(${idx})">+ Ajouter un joueur</button>
+                  <button id="btn-save-${idx}" class="btn-save" onclick="saveScores(${idx})">💾 Enregistrer</button>
+                </div>
+              </div>
+            </div>
+            <div class="links">
+              <a href="${g.Lien_Regles}" target="_blank" rel="noopener">📖 Règles PDF</a>
+              <a href="${g.Lien_Video}" target="_blank" rel="noopener">▶️ Vidéo explicative</a>
+            </div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function pickRandom() {
+      const filtered = getFilteredGames();
+      if (filtered.length > 0) {
+        const randomIndex = Math.floor(Math.random() * filtered.length);
+        renderGames(randomIndex);
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById('f-search').value = '';
+      document.getElementById('f-players').value = 'all';
+      document.getElementById('f-age').value = 'all';
+      document.getElementById('f-fatigue').value = 'all';
+      document.getElementById('f-time').value = 'all';
+      document.getElementById('f-interaction').value = 'all';
+      renderGames();
+    }
+
+    loadFromGoogleSheet();
+  </script>
+</body>
+</html>
