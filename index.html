@@ -1,451 +1,517 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="referrer" content="no-referrer" />
   <title>Notre Ludothèque</title>
-  <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#0f172a">
   <style>
     :root {
       --bg: #0f172a;
       --card: #1e293b;
+      --card-hover: #26354d;
       --text: #f8fafc;
       --muted: #94a3b8;
       --accent: #38bdf8;
-      --success: #34d399;
-      --warning: #fbbf24;
+      --accent-2: #818cf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
       --border: #334155;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 16px; max-width: 780px; margin: 0 auto; padding-bottom: 60px; }
-    
-    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
-    .title-wrap h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
-    .sync-status { font-size: 0.75rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); display: inline-block; }
-    .dot.live { background: var(--success); }
-    .btn-sync { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
-    .btn-sync:hover { border-color: var(--accent); color: var(--accent); }
 
-    .actions-bar { display: flex; gap: 8px; width: 100%; margin-bottom: 14px; }
-    .search-input { flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; font-size: 0.95rem; outline: none; }
-    .search-input:focus { border-color: var(--accent); }
-    .btn-random { background: var(--accent); color: #0f172a; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 40px;
+      line-height: 1.45;
+    }
 
-    .filters { background: var(--card); padding: 14px; border-radius: 14px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-    @media (min-width: 600px) { .filters { grid-template-columns: repeat(5, 1fr); } }
-    .filter-group label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
-    select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px; border-radius: 8px; font-size: 0.85rem; outline: none; }
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
 
-    .results-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; padding: 0 4px; }
-    .btn-reset { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto 12px auto;
+    }
 
-    .game-list { display: flex; flex-direction: column; gap: 12px; }
-    .game-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
-    .game-card:hover { border-color: #475569; }
-    .game-card.highlighted { border: 2px solid var(--accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.18); }
+    h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .count-badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
 
-    .game-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .game-main-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .game-thumb-wrap { width: 56px; height: 56px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-size: 1.5rem; }
-    .game-thumb { width: 100%; height: 100%; object-fit: cover; }
-    .game-title { font-size: 1.15rem; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .game-type { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
-    .time-pill { background: rgba(56, 189, 248, 0.12); color: var(--accent); padding: 5px 10px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .controls {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
 
-    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-    .badge { background: var(--bg); border: 1px solid var(--border); padding: 4px 9px; border-radius: 7px; font-size: 0.75rem; color: #cbd5e1; }
-    .badge.fatigue-Apero { border-color: #34d399; color: #6ee7b7; }
-    .badge.fatigue-Leger { border-color: #38bdf8; color: #7dd3fc; }
-    .badge.fatigue-Strategique { border-color: #fbbf24; color: #fde68a; }
-    .badge.fatigue-Brule { border-color: #f87171; color: #fca5a5; }
+    input, select, button {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+    }
 
-    .expand-hint { font-size: 0.78rem; color: var(--muted); margin-top: 12px; display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px dashed var(--border); }
+    input:focus, select:focus { border-color: var(--accent); }
 
-    .setup-panel { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 0.92rem; line-height: 1.55; cursor: default; }
-    .setup-panel.open { display: block; }
-    .setup-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
-    .setup-box strong { color: var(--accent); display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .btn-random {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0f172a;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
 
-    .scores-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .btn-edit-scores { background: var(--card); color: var(--accent); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-    .scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-    .score-chip { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
-    .score-val { font-weight: 700; color: var(--warning); }
-    .score-editor { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
-    .score-editor.open { display: block; }
-    .score-row { display: flex; gap: 8px; margin-bottom: 8px; }
-    .score-row input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 7px 10px; border-radius: 6px; font-size: 0.85rem; width: 100%; }
-    .score-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; }
-    .btn-small { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 7px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
-    .btn-save { background: var(--success); color: #0f172a; border: none; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+    main {
+      max-width: 1100px;
+      margin: 18px auto;
+      padding: 0 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+    }
 
-    .links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-    .links a { text-align: center; background: var(--bg); color: var(--text); text-decoration: none; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; }
-    .links a:hover { border-color: var(--accent); color: var(--accent); }
-    .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); background: var(--card); border-radius: 14px; border: 1px dashed var(--border); }
+    .game-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      gap: 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .game-card:hover {
+      background: var(--card-hover);
+      transform: translateY(-2px);
+    }
+
+    .game-thumb {
+      width: 78px;
+      height: 78px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: #0b1120;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+
+    .game-info { flex: 1; min-width: 0; }
+    .game-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+
+    .game-type {
+      font-size: 0.78rem;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .game-desc-preview {
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--muted);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 650px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .goal-box {
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 14px 0;
+    }
+
+    .goal-title {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .step-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--warning);
+      margin-bottom: 4px;
+    }
+
+    .links-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-link {
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .score-section {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .score-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .score-input-row input { flex: 1; }
+    .btn-save {
+      background: var(--success);
+      color: #052e16;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="title-wrap">
+    <div class="header-top">
       <h1>🎲 Notre Ludothèque</h1>
-      <div class="sync-status">
-        <span id="sync-dot" class="dot"></span>
-        <span id="sync-text">Connexion au Google Sheet...</span>
-      </div>
+      <span id="gameCount" class="count-badge">Chargement...</span>
     </div>
-    <button class="btn-sync" onclick="loadFromGoogleSheet()">🔄 Actualiser</button>
-  </header>
-
-  <div class="actions-bar">
-    <input type="text" id="f-search" class="search-input" placeholder="Rechercher un jeu ou un style..." oninput="renderGames()">
-    <button class="btn-random" onclick="pickRandom()">🎲 Tirer au sort</button>
-  </div>
-
-  <div class="filters">
-    <div class="filter-group">
-      <label>👥 Joueurs</label>
-      <select id="f-players" onchange="renderGames()">
-        <option value="all">Tous</option>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Rechercher un jeu..." oninput="renderGames()" />
+      <select id="playerFilter" onchange="renderGames()">
+        <option value="">👥 Joueurs (Tous)</option>
+        <option value="1">1 joueur</option>
         <option value="2">2 joueurs</option>
         <option value="3">3 joueurs</option>
         <option value="4">4 joueurs</option>
-        <option value="5">5+ joueurs</option>
+        <option value="5">5 joueurs</option>
+        <option value="6">6+ joueurs</option>
       </select>
-    </div>
-    <div class="filter-group">
-      <label>🎂 Âge min</label>
-      <select id="f-age" onchange="renderGames()">
-        <option value="all">Tous les âges</option>
-        <option value="4">Dès 4 ans (Enfant)</option>
-        <option value="6">6 ans et moins</option>
-        <option value="8">8 ans et +</option>
+      <select id="ageFilter" onchange="renderGames()">
+        <option value="">🎂 Âge (Tous)</option>
+        <option value="4">Dès 4 ans</option>
+        <option value="6">Dès 6 ans</option>
+        <option value="8">Dès 8 ans</option>
+        <option value="10">Dès 10 ans</option>
       </select>
-    </div>
-    <div class="filter-group">
-      <label>🔋 Fatigue</label>
-      <select id="f-fatigue" onchange="renderGames()">
-        <option value="all">Tous niveaux</option>
-        <option value="Apéro">Apéro (Zéro effort)</option>
-        <option value="Léger">Léger</option>
-        <option value="Stratégique">Stratégique</option>
-        <option value="Brûle-neurones">Brûle-neurones</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>⏱️ Durée max</label>
-      <select id="f-time" onchange="renderGames()">
-        <option value="all">Peu importe</option>
+      <select id="timeFilter" onchange="renderGames()">
+        <option value="">⏱️ Durée max</option>
         <option value="15">≤ 15 min</option>
         <option value="30">≤ 30 min</option>
         <option value="45">≤ 45 min</option>
-        <option value="60">≤ 60 min</option>
       </select>
-    </div>
-    <div class="filter-group">
-      <label>🤝 Interaction</label>
-      <select id="f-interaction" onchange="renderGames()">
-        <option value="all">Toutes</option>
-        <option value="Coop">Coopératif</option>
-        <option value="Compétitif relax">Compétitif relax</option>
-        <option value="Confrontation">Confrontation</option>
+      <select id="fatigueFilter" onchange="renderGames()">
+        <option value="">🧠 Fatigue (Toutes)</option>
+        <option value="Apéro">Apéro</option>
+        <option value="Léger">Léger</option>
+        <option value="Stratégique">Stratégique</option>
       </select>
+      <button class="btn-random" onclick="pickRandomGame()">🎲 Au hasard</button>
     </div>
-  </div>
+  </header>
 
-  <div class="results-info">
-    <span id="count-label">0 jeu affiché</span>
-    <button class="btn-reset" onclick="resetFilters()">Réinitialiser les filtres</button>
-  </div>
+  <main id="gamesGrid"></main>
 
-  <div id="game-list" class="game-list"></div>
+  <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal" id="modalContent"></div>
+  </div>
 
   <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDTCTLj-hkq0Mi924uG-PkmFnpBcHkdGqEFUsZHeoamH_JqV-g7h5efCZc21bA4fl-jHTvQLCA3iaN/pub?gid=0&single=true&output=csv";
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyO3t70lKLZ_uAkvYJcuvEMT11qk-QhoCvJfN3Prt5RGeT5vbRXiYtDNbp2bbq4JSeb1Q/exec";
+    const SCRIPT_URL = "https://script.goo" + "gle.com/macros/s/AKfycbyO3t70lKLZ_uAkvYJcuvEMT11qk-QhoCvJfN3Prt5RGeT5vbRXiYtDNbp2bbq4JSeb1Q/exec";
 
-    let games = [];
+    let allGames = [];
 
     function parseCSV(text) {
       const rows = [];
-      let row = [], cell = '', inQuotes = false;
+      let row = [], cur = "", inQuotes = false;
       for (let i = 0; i < text.length; i++) {
         const c = text[i], next = text[i + 1];
         if (inQuotes) {
-          if (c === '"' && next === '"') { cell += '"'; i++; }
+          if (c === '"' && next === '"') { cur += '"'; i++; }
           else if (c === '"') { inQuotes = false; }
-          else { cell += c; }
+          else { cur += c; }
         } else {
           if (c === '"') { inQuotes = true; }
-          else if (c === ',') { row.push(cell.trim()); cell = ''; }
+          else if (c === ',') { row.push(cur.trim()); cur = ""; }
           else if (c === '\n' || (c === '\r' && next === '\n')) {
+            row.push(cur.trim());
+            if (row.some(cell => cell !== "")) rows.push(row);
+            row = []; cur = "";
             if (c === '\r') i++;
-            row.push(cell.trim());
-            if (row.some(val => val !== '')) rows.push(row);
-            row = []; cell = '';
-          } else { cell += c; }
+          } else { cur += c; }
         }
       }
-      if (cell || row.length > 0) {
-        row.push(cell.trim());
-        if (row.some(val => val !== '')) rows.push(row);
+      if (cur || row.length) {
+        row.push(cur.trim());
+        if (row.some(cell => cell !== "")) rows.push(row);
       }
-      if (rows.length < 2) return [];
-      const headers = rows[0];
-      return rows.slice(1).map(r => {
-        const obj = {};
-        headers.forEach((h, idx) => { obj[h] = r[idx] || ""; });
-        obj.Joueurs_Min = Number(obj.Joueurs_Min) || 1;
-        obj.Joueurs_Max = Number(obj.Joueurs_Max) || 4;
-        obj.Duree_Min = Number(obj.Duree_Min) || 30;
-        obj.Temps_Setup = Number(obj.Temps_Setup) || 2;
-        const localScore = localStorage.getItem('scores_' + obj.Nom);
-        if (!obj.Meilleurs_Scores && localScore) obj.Meilleurs_Scores = localScore;
-        return obj;
-      }).filter(g => g.Nom);
+      return rows;
     }
 
     async function loadFromGoogleSheet() {
-      const dot = document.getElementById('sync-dot');
-      const txt = document.getElementById('sync-text');
-      txt.textContent = "Synchronisation en cours...";
       try {
-        const res = await fetch(SHEET_CSV_URL, { cache: "no-cache" });
+        const res = await fetch(SHEET_CSV_URL + "&t=" + Date.now());
         const csvText = await res.text();
-        const parsed = parseCSV(csvText);
-        if (parsed.length > 0) {
-          games = parsed;
-          dot.classList.add('live');
-          txt.textContent = `Synchronisé en direct (${games.length} jeux)`;
-        }
-      } catch (e) {
-        dot.classList.remove('live');
-        txt.textContent = `Mode hors-ligne (${games.length} jeux)`;
+        const rows = parseCSV(csvText);
+        const headers = rows[0];
+
+        allGames = rows.slice(1).map(r => {
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = r[idx] || "");
+          return {
+            nom: obj["Nom"] || r[0] || "",
+            min: parseInt(obj["Joueurs_Min"] || r[1]) || 1,
+            max: parseInt(obj["Joueurs_Max"] || r[2]) || 99,
+            ideal: obj["Joueurs_Ideal"] || r[3] || "",
+            duree: parseInt(obj["Duree_Min"] || r[4]) || 0,
+            setupTime: obj["Temps_Setup"] || r[5] || "1",
+            type: obj["Type"] || r[6] || "",
+            fatigue: obj["Fatigue"] || r[7] || "",
+            interaction: obj["Interaction"] || r[8] || "",
+            encombrement: obj["Encombrement"] || r[9] || "",
+            setupCommun: obj["Setup_Commun"] || r[10] || "",
+            setupJoueur: obj["Setup_Par_Joueur"] || r[11] || "",
+            premierTour: obj["Premier_Tour"] || r[12] || "",
+            regles: obj["Lien_Regles"] || r[13] || "",
+            video: obj["Lien_Video"] || r[14] || "",
+            age: obj["Age_Min"] || r[15] || "",
+            image: obj["Image_URL"] || r[16] || "",
+            scores: obj["Meilleurs_Scores"] || r[17] || "",
+            description: obj["Description_But"] || r[18] || ""
+          };
+        }).filter(g => g.nom);
+
+        renderGames();
+      } catch (err) {
+        document.getElementById("gameCount").textContent = "Erreur de chargement";
+        console.error(err);
       }
-      renderGames();
-    }
-
-    function parseScoresList(scoreStr) {
-      if (!scoreStr || !scoreStr.trim()) return [];
-      return scoreStr.split('|').map(item => {
-        const parts = item.split(':');
-        return {
-          name: (parts[0] || '').trim(),
-          score: (parts.slice(1).join(':') || '').trim()
-        };
-      }).filter(s => s.name);
-    }
-
-    function formatScoresHTML(scoreStr) {
-      const list = parseScoresList(scoreStr);
-      if (list.length === 0) {
-        return `<span style="color:var(--muted);font-size:0.82rem;">Aucun record enregistré pour l'instant.</span>`;
-      }
-      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
-      return `<div class="scores-grid">` + list.map((s, idx) => `
-        <div class="score-chip">
-          <span>${medals[idx] || '👤'} ${s.name}</span>
-          <span class="score-val">${s.score}</span>
-        </div>
-      `).join('') + `</div>`;
-    }
-
-    function toggleScoreEditor(gameIndex) {
-      const editor = document.getElementById(`score-editor-${gameIndex}`);
-      editor.classList.toggle('open');
-    }
-
-    function addScoreRow(gameIndex) {
-      const container = document.getElementById(`score-rows-${gameIndex}`);
-      const row = document.createElement('div');
-      row.className = 'score-row';
-      row.innerHTML = `
-        <input type="text" placeholder="Nom du joueur" class="s-name">
-        <input type="text" placeholder="Score (ex: 85 pts)" class="s-val">
-      `;
-      container.appendChild(row);
-    }
-
-    async function saveScores(gameIndex) {
-      const game = getFilteredGames()[gameIndex];
-      const container = document.getElementById(`score-rows-${gameIndex}`);
-      const rows = container.querySelectorAll('.score-row');
-      const entries = [];
-      rows.forEach(r => {
-        const n = r.querySelector('.s-name').value.trim();
-        const v = r.querySelector('.s-val').value.trim();
-        if (n && v) entries.push(`${n} : ${v}`);
-      });
-      const formatted = entries.join(' | ');
-      game.Meilleurs_Scores = formatted;
-      localStorage.setItem('scores_' + game.Nom, formatted);
-
-      const btn = document.getElementById(`btn-save-${gameIndex}`);
-      btn.textContent = "⏳ Sauvegarde...";
-
-      try {
-        const url = `${APPS_SCRIPT_URL}?action=score&nom=${encodeURIComponent(game.Nom)}&scores=${encodeURIComponent(formatted)}`;
-        await fetch(url, { mode: 'no-cors' });
-      } catch (e) {}
-
-      renderGames(gameIndex);
-    }
-
-    function getFatigueClass(f) {
-      if (!f) return '';
-      if (f.includes('Apéro') || f.includes('Apero')) return 'fatigue-Apero';
-      if (f.includes('Léger') || f.includes('Leger')) return 'fatigue-Leger';
-      if (f.includes('Stratégique') || f.includes('Strategique')) return 'fatigue-Strategique';
-      return 'fatigue-Brule';
-    }
-
-    function extractAgeNumber(ageStr) {
-      if (!ageStr) return 0;
-      const m = String(ageStr).match(/\d+/);
-      return m ? Number(m[0]) : 0;
     }
 
     function getFilteredGames() {
-      const q = document.getElementById('f-search').value.toLowerCase().trim();
-      const p = document.getElementById('f-players').value;
-      const age = document.getElementById('f-age').value;
-      const f = document.getElementById('f-fatigue').value;
-      const t = document.getElementById('f-time').value;
-      const inter = document.getElementById('f-interaction').value;
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const p = parseInt(document.getElementById("playerFilter").value);
+      const a = parseInt(document.getElementById("ageFilter").value);
+      const t = parseInt(document.getElementById("timeFilter").value);
+      const f = document.getElementById("fatigueFilter").value;
 
-      return games.filter(g => {
-        const matchQ = !q || g.Nom.toLowerCase().includes(q) || (g.Type && g.Type.toLowerCase().includes(q));
-        const matchP = p === 'all' || (p === '5' ? g.Joueurs_Max >= 5 : (Number(p) >= g.Joueurs_Min && Number(p) <= g.Joueurs_Max));
-        const gameAge = extractAgeNumber(g.Age_Min);
-        const matchAge = age === 'all' || (age === '4' && gameAge <= 4) || (age === '6' && gameAge <= 6) || (age === '8' && gameAge >= 8);
-        const matchF = f === 'all' || g.Fatigue === f;
-        const matchT = t === 'all' || g.Duree_Min <= Number(t);
-        const matchI = inter === 'all' || (g.Interaction && g.Interaction.toLowerCase().includes(inter.toLowerCase()));
-        return matchQ && matchP && matchAge && matchF && matchT && matchI;
-      });
-    }
-
-    function renderGames(highlightIndex = null) {
-      const list = document.getElementById('game-list');
-      const countLabel = document.getElementById('count-label');
-      const filtered = getFilteredGames();
-      list.innerHTML = '';
-
-      countLabel.textContent = `${filtered.length} jeu${filtered.length > 1 ? 'x' : ''} disponible${filtered.length > 1 ? 's' : ''}`;
-
-      if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty-state">Aucun jeu ne correspond à ces filtres.<br><small>Essaie d'élargir la durée, l'âge ou le niveau de fatigue.</small></div>`;
-        return;
-      }
-
-      filtered.forEach((g, idx) => {
-        const isHighlighted = highlightIndex === idx;
-        const card = document.createElement('div');
-        card.className = `game-card ${isHighlighted ? 'highlighted' : ''}`;
-        card.onclick = () => {
-          const panel = card.querySelector('.setup-panel');
-          panel.classList.toggle('open');
-        };
-
-        const jLabel = g.Joueurs_Min === g.Joueurs_Max ? `${g.Joueurs_Min} joueurs` : `${g.Joueurs_Min} à ${g.Joueurs_Max} joueurs`;
-        const ageLabel = g.Age_Min ? `🎂 ${g.Age_Min} ans` : '';
-        const existingScores = parseScoresList(g.Meilleurs_Scores);
-        const rowCount = Math.max(4, existingScores.length);
-        let editorRowsHTML = '';
-        for (let r = 0; r < rowCount; r++) {
-          const sName = existingScores[r] ? existingScores[r].name : '';
-          const sVal = existingScores[r] ? existingScores[r].score : '';
-          editorRowsHTML += `
-            <div class="score-row">
-              <input type="text" placeholder="Joueur ${r + 1}" class="s-name" value="${sName}">
-              <input type="text" placeholder="Score (ex: 90 pts)" class="s-val" value="${sVal}">
-            </div>
-          `;
+      return allGames.filter(g => {
+        if (q && !g.nom.toLowerCase().includes(q) && !g.type.toLowerCase().includes(q) && !g.description.toLowerCase().includes(q)) return false;
+        if (p) {
+          if (p === 6 && g.max < 6) return false;
+          if (p < 6 && (p < g.min || p > g.max)) return false;
         }
-
-        const thumbHTML = g.Image_URL
-          ? `<img src="${g.Image_URL}" alt="${g.Nom}" class="game-thumb" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentElement.innerHTML='🎲'">`
-          : `🎲`;
-
-        card.innerHTML = `
-          <div class="game-header">
-            <div class="game-main-info">
-              <div class="game-thumb-wrap">${thumbHTML}</div>
-              <div style="min-width:0;">
-                <div class="game-title">${isHighlighted ? '🎯 ' : ''}${g.Nom}</div>
-                <div class="game-type">${g.Type || ''}</div>
-              </div>
-            </div>
-            <div class="time-pill">⏱️ ${g.Duree_Min} min</div>
-          </div>
-          <div class="badges">
-            <span class="badge">👥 ${jLabel} (Idéal : ${g.Joueurs_Ideal})</span>
-            ${ageLabel ? `<span class="badge">${ageLabel}</span>` : ''}
-            <span class="badge ${getFatigueClass(g.Fatigue)}">🔋 ${g.Fatigue}</span>
-            <span class="badge">🛠️ Setup : ${g.Temps_Setup} min</span>
-            <span class="badge">🤝 ${g.Interaction}</span>
-            <span class="badge">📐 Table : ${g.Encombrement}</span>
-          </div>
-          <div class="expand-hint">
-            <span>Toucher pour voir la mise en place, les règles et les scores</span>
-            <span>▼</span>
-          </div>
-          <div class="setup-panel ${isHighlighted ? 'open' : ''}" onclick="event.stopPropagation()">
-            <div class="setup-box">
-              <strong>1. Mise en place commune (${g.Temps_Setup} min)</strong>
-              ${g.Setup_Commun}
-            </div>
-            <div class="setup-box">
-              <strong>2. Distribution par joueur</strong>
-              ${g.Setup_Par_Joueur}
-            </div>
-            <div class="setup-box">
-              <strong>3. Premier tour</strong>
-              ${g.Premier_Tour}
-            </div>
-            <div class="setup-box">
-              <div class="scores-header">
-                <strong style="margin:0;">🏆 Meilleurs Scores</strong>
-                <button class="btn-edit-scores" onclick="toggleScoreEditor(${idx})">✏️ Modifier les scores</button>
-              </div>
-              ${formatScoresHTML(g.Meilleurs_Scores)}
-              <div id="score-editor-${idx}" class="score-editor">
-                <div id="score-rows-${idx}">${editorRowsHTML}</div>
-                <div class="score-actions">
-                  <button class="btn-small" onclick="addScoreRow(${idx})">+ Ajouter un joueur</button>
-                  <button id="btn-save-${idx}" class="btn-save" onclick="saveScores(${idx})">💾 Enregistrer</button>
-                </div>
-              </div>
-            </div>
-            <div class="links">
-              <a href="${g.Lien_Regles}" target="_blank" rel="noopener">📖 Règles PDF</a>
-              <a href="${g.Lien_Video}" target="_blank" rel="noopener">▶️ Vidéo explicative</a>
-            </div>
-          </div>
-        `;
-        list.appendChild(card);
+        if (a) {
+          const gameAge = parseInt(g.age) || 0;
+          if (gameAge > a) return false;
+        }
+        if (t && g.duree > t) return false;
+        if (f && g.fatigue.toLowerCase() !== f.toLowerCase()) return false;
+        return true;
       });
     }
 
-    function pickRandom() {
-      const filtered = getFilteredGames();
-      if (filtered.length > 0) {
-        const randomIndex = Math.floor(Math.random() * filtered.length);
-        renderGames(randomIndex);
-      }
+    function renderGames() {
+      const list = getFilteredGames();
+      document.getElementById("gameCount").textContent = `${list.length} jeu${list.length > 1 ? 'x' : ''}`;
+      const grid = document.getElementById("gamesGrid");
+
+      grid.innerHTML = list.map(g => `
+        <div class="game-card" onclick="openModal('${g.nom.replace(/'/g, "\\'")}')">
+          <img class="game-thumb" src="${g.image || 'https://via.placeholder.com/80?text=Jeu'}" alt="${g.nom}" referrerpolicy="no-referrer" onerror="this.src='https://via.placeholder.com/80?text=Jeu'" />
+          <div class="game-info">
+            <div class="game-title">${g.nom}</div>
+            <div class="game-type">${g.type}</div>
+            ${g.description ? `<p class="game-desc-preview">🎯 ${g.description}</p>` : ''}
+            <div class="badges">
+              <span class="badge">👥 ${g.min}-${g.max} j.</span>
+              <span class="badge">⏱️ ${g.duree} min</span>
+              <span class="badge">🛠️ Setup ${g.setupTime}m</span>
+              <span class="badge">🧠 ${g.fatigue}</span>
+              ${g.age ? `<span class="badge">🎂 ${g.age}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join("");
     }
 
-    function resetFilters() {
-      document.getElementById('f-search').value = '';
-      document.getElementById('f-players').value = 'all';
-      document.getElementById('f-age').value = 'all';
-      document.getElementById('f-fatigue').value = 'all';
-      document.getElementById('f-time').value = 'all';
-      document.getElementById('f-interaction').value = 'all';
-      renderGames();
+    function openModal(gameName) {
+      const g = allGames.find(item => item.nom === gameName);
+      if (!g) return;
+
+      const content = document.getElementById("modalContent");
+      content.innerHTML = `
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2 style="margin-bottom:4px;">${g.nom}</h2>
+        <div class="game-type" style="margin-bottom:10px;">${g.type} • Idéal : ${g.ideal} • Âge : ${g.age || 'Tous'}</div>
+
+        ${g.description ? `
+          <div class="goal-box">
+            <div class="goal-title">🎯 Description & But du jeu</div>
+            <p>${g.description}</p>
+          </div>
+        ` : ''}
+
+        <div class="step-box">
+          <div class="step-title">1. Mise en place commune (${g.setupTime} min)</div>
+          <p>${g.setupCommun || 'Aucune préparation spéciale.'}</p>
+        </div>
+
+        <div class="step-box">
+          <div class="step-title">2. Mise en place par joueur</div>
+          <p>${g.setupJoueur || 'Aucun matériel individuel.'}</p>
+        </div>
+
+        <div class="step-box">
+          <div class="step-title">3. Premier tour</div>
+          <p>${g.premierTour || 'Le plus jeune joueur commence.'}</p>
+        </div>
+
+        <div class="links-row">
+          ${g.regles ? `<a class="btn-link" href="${g.regles}" target="_blank" rel="noopener">📄 Livret de règles (PDF)</a>` : ''}
+          ${g.video ? `<a class="btn-link" href="${g.video}" target="_blank" rel="noopener">🎬 Vidéo explicative</a>` : ''}
+        </div>
+
+        <div class="score-section">
+          <div class="step-title">🏆 Meilleurs Scores / Records</div>
+          <div class="score-input-row">
+            <input type="text" id="scoreInput" value="${g.scores.replace(/"/g, '&quot;')}" placeholder="Ex: Isabelle : 85 pts | Sam : 78 pts" />
+            <button class="btn-save" onclick="saveScore('${g.nom.replace(/'/g, "\\'")}')">Enregistrer</button>
+          </div>
+          <small id="scoreStatus" style="color:var(--muted); display:block; margin-top:6px;"></small>
+        </div>
+      `;
+
+      document.getElementById("modalOverlay").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("modalOverlay").classList.remove("active");
+    }
+
+    function pickRandomGame() {
+      const list = getFilteredGames();
+      if (!list.length) return;
+      const chosen = list[Math.floor(Math.random() * list.length)];
+      openModal(chosen.nom);
+    }
+
+    async function saveScore(gameName) {
+      const val = document.getElementById("scoreInput").value;
+      const status = document.getElementById("scoreStatus");
+      status.textContent = "Sauvegarde en cours...";
+      try {
+        const url = `${SCRIPT_URL}?action=score&nom=${encodeURIComponent(gameName)}&scores=${encodeURIComponent(val)}`;
+        await fetch(url, { mode: "no-cors" });
+        const g = allGames.find(item => item.nom === gameName);
+        if (g) g.scores = val;
+        status.textContent = "✅ Record enregistré dans Google Sheets !";
+      } catch (e) {
+        status.textContent = "❌ Erreur lors de la sauvegarde.";
+      }
     }
 
     loadFromGoogleSheet();
